@@ -1,28 +1,63 @@
 import {unlink} from 'node:fs/promises'
 import { validationResult } from "express-validator"
-import { Companyseguros,Titularseguridadsocial,Seguridadsocial,Paciente ,} from '../models/index.js'
-
-const admin = async(req, res) =>{
-    const{id}= req.usuario
-
-    const paciente = await Paciente.findAll({
-        where:{
-            usuarioid:id
-        },
-        include:[
-            { model: Companyseguros , as:'companyseguro'},
-            {model: Seguridadsocial, as:'seguridadsocial' },
-            {model:Titularseguridadsocial,as:'titularseguridadsocial'}
-        ],
-
-    })
+import { Companyseguros,Titularseguridadsocial,Seguridadsocial,Paciente, Usuario ,} from '../models/index.js'
+import { promises } from 'node:dns'
 
 
-    res.render('pacientes/admin',{
-        pagina:'Pacientes Registrados',
-        paciente,
-        csrfToken: req.csrfToken(),
-    })
+const admin = async (req, res) => {
+
+    // Leer QueryString
+
+    const { pagina: paginaActual } = req.query
+    
+    const expresion = /^[1-9]$/
+
+    if(!expresion.test(paginaActual)) {
+        return res.redirect('/mis-pacientes?pagina=1')
+    }
+
+    try {
+        const {id} = req.usuario
+
+        // Limites y Offset para el paginador
+        const limit = 10
+        const offset = ((paginaActual * limit) - limit)
+
+        const [paciente, total] = await Promise.all([
+            Paciente.findAll({
+                limit,
+                offset,
+                where: {
+                    usuarioId : id
+                },
+                include: [
+                    { model: Companyseguros , as:'companyseguro'},
+                    {model: Seguridadsocial, as:'seguridadsocial' },
+                    {model:Titularseguridadsocial,as:'titularseguridadsocial'}
+                 ],
+            }),
+            Paciente.count({
+                where: {
+                    usuarioId : id
+                }
+            })
+        ])
+
+        res.render('pacientes/admin', {
+            pagina: 'Pacientes Registrados',
+            paciente,
+            csrfToken: req.csrfToken(),
+            paginas: Math.ceil(total / limit),
+            paginaActual: Number(paginaActual),
+            total,
+            offset,
+            limit
+        })
+
+    } catch (error) {
+        console.log(error)
+    }
+    
 }
 
 //formulario para crear 
@@ -303,6 +338,35 @@ const eliminar = async (req,res) =>{
     res.redirect('/mis-pacientes')
 }
 
+//mostrar Pacientes
+
+const mostrarPaciente = async (req,res)=>{
+   
+
+    
+    const {id} = req.params
+//Comprobar que el paciente estista 
+    const paciente =await Paciente.findByPk(id,{
+        include:[
+            { model: Companyseguros , as:'companyseguro'},
+            {model: Seguridadsocial, as:'seguridadsocial' },
+            {model:Titularseguridadsocial,as:'titularseguridadsocial'},
+            {model:Usuario,as:'usuario'}
+        ],
+    })
+     if(!paciente){
+        return res.redirect('/404')
+     }
+
+
+    res.render('pacientes/mostrar',{
+        paciente,
+        
+        pagina:paciente.nombre
+
+    })
+}
+
 export{
     admin,
     crear,
@@ -311,6 +375,8 @@ export{
     almacenarImagen,
     editar,
     guardarCambios,
-    eliminar
+    eliminar,
+  mostrarPaciente
+
     
 }
