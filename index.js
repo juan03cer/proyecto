@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import usuarioRoutes from './routes/usuarioRoutes.js';
 import pacientesRoutes from './routes/pacientesRoutes.js';
 
+import superRoutes from './routes/superRoutes.js';
+
 import appRoutes from './routes/appRoutes.js';
 import apiRoutes from './routes/apiRoutes.js'
 
@@ -43,17 +45,9 @@ app.use(express.static('public'))
 app.use('/',appRoutes)
 app.use('/auth', usuarioRoutes)
 app.use('/',pacientesRoutes)
+app.use('/',superRoutes)
+
 app.use('/api', apiRoutes)
-
-
-
-
-
-
-
-
-
-
 
 //Definir puerto 
 const port = process.env.PORT || 3000;
