@@ -15,7 +15,8 @@ export {
     resetPassword,
     nuevoPassword,
     comprobarToken,
-    autenticar
+    autenticar,
+    cerrarSesion
 }
 
 
@@ -46,6 +47,8 @@ const autenticar = async (req,res)=>{
     }
 
     const {email,password}= req.body
+
+   
     //comprobar si el usuario existe
     const usuario= await Usuario.findOne({where:{email}})
     if(!usuario){
@@ -54,6 +57,8 @@ const autenticar = async (req,res)=>{
             csrfToken: req.csrfToken(),
             errores: [{msg:'el usuario no existe'}]
            })
+    }else{
+        
     }
     
     //comprobar si el usuario esta confirmado
@@ -73,6 +78,21 @@ const autenticar = async (req,res)=>{
             errores: [{msg:'El password es incorrecto'}]
            })
     }
+    
+ // Comprobar si el usuario es el super usuario
+    if (email === "admin@admin.com") {
+        // Redirigir al super usuario a otra vista
+        const token = generarJWT({id: usuario.id, nombre : usuario.nombre})
+
+        console.log(token)
+    
+        //almacenar en un cookie
+        return res.cookie('_token', token,{
+            httpOnly:true,
+            // secure:true
+        }).redirect('/mi-sitio')
+    
+    }
 
     //Autenticar al usuario
    const token = generarJWT({id: usuario.id, nombre : usuario.nombre})
@@ -86,6 +106,9 @@ const autenticar = async (req,res)=>{
     }).redirect('/mis-pacientes')
 
 
+}
+const cerrarSesion=(req,res)=>{
+    return res.clearCookie('_token').status(200).redirect('/auth/login')
 }
 
 const formularioRegistro = (req, res) =>{
