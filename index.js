@@ -3,6 +3,10 @@ import csrf from 'csurf'
 import cookieParser from 'cookie-parser';
 import usuarioRoutes from './routes/usuarioRoutes.js';
 import pacientesRoutes from './routes/pacientesRoutes.js';
+
+import appRoutes from './routes/appRoutes.js';
+import apiRoutes from './routes/apiRoutes.js'
+
 import db from './config/db.js';
 
 // crear la app
@@ -36,8 +40,10 @@ app.set('views', './views')
 app.use(express.static('public'))
 
 // Routing
+app.use('/',appRoutes)
 app.use('/auth', usuarioRoutes)
 app.use('/',pacientesRoutes)
+app.use('/api', apiRoutes)
 
 
 
